@@ -23,6 +23,21 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
     'sickleave'
   ]; //TODO: replace with isar data
   String dropdownValue = 'work'; //TODO: replace with isar data
+  List<String> days = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ]; //TODO: replace with isar data
+  String dropdownValueDay = 'Monday'; //TODO: replace with isar data
+  TimeOfDay selectedTime = TimeOfDay.now();
+
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _newCategoryController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +57,11 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Category'),
+                const Text(
+                  'Category',
+                  style: TextStyle(
+                      color: Colors.black38, fontWeight: FontWeight.w600),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -68,15 +87,125 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                         },
                       ),
                     ),
-                    IconButton(onPressed: () {}, icon: const Icon(Icons.add))
+                    IconButton(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) => AlertDialog(
+                            title: const Text('New Category'),
+                            content: TextFormField(
+                              controller: _newCategoryController,
+                            ),
+                            actions: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  if (_newCategoryController.text.isNotEmpty) {
+                                    _addCategory();
+                                  } else {
+                                    
+                                  }
+                                },
+                                child: const Text('Add'),
+                              )
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.add),
+                    )
                   ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 16.0),
+                  child: Text(
+                    'Title',
+                    style: TextStyle(
+                        color: Colors.black38, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                TextFormField(
+                  controller: _titleController,
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 16.0),
+                  child: Text(
+                    'Start Time',
+                    style: TextStyle(
+                        color: Colors.black38, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.7,
+                      child: TextFormField(
+                        controller: _timeController,
+                        enabled: false,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        _selectedTime(context);
+                      },
+                      icon: const Icon(Icons.calendar_month),
+                    ),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 16),
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.7,
+                  child: DropdownButton(
+                    focusColor: const Color(0xffffffff),
+                    dropdownColor: const Color(0xffffffff),
+                    isExpanded: true,
+                    value: dropdownValueDay,
+                    icon: const Icon(Icons.keyboard_arrow_down),
+                    items: days.map<DropdownMenuItem<String>>((String item) {
+                      return DropdownMenuItem<String>(
+                        value: item,
+                        child: Text(item),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      setState(() {
+                        dropdownValueDay = value!;
+                      });
+                    },
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 16),
+                ),
+                Align(
+                  alignment: Alignment.center,
+                  child: ElevatedButton(
+                    onPressed: () {},
+                    child: const Text('Add'),
+                  ),
                 )
               ],
             ),
           ),
         ));
   }
-}
 
-//https://www.youtube.com/watch?v=44ziT-XdPbI&list=PLKKf8l1ne4_hMBtRykh9GCC4MMyteUTyf&index=9 
-// 30:52
+  _selectedTime(BuildContext context) async {
+    final TimeOfDay? timeOfDay = await showTimePicker(
+        context: context,
+        initialTime: selectedTime,
+        initialEntryMode: TimePickerEntryMode.dial);
+
+    if (timeOfDay != null && timeOfDay != selectedTime) {
+      selectedTime = timeOfDay;
+      setState(() {
+        _timeController.text =
+            "${selectedTime.hour}:${selectedTime.minute} ${selectedTime.period.name}";
+      });
+    }
+  }
+
+  _addCategory() {}
+}

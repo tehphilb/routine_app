@@ -21,12 +21,17 @@ void main() async {
   final isar = await Isar.open(
     [RoutineSchema, CategorySchema],
     directory: dir.path,
+  ); //TODO: reolace with riverpod provider
+  runApp(
+    ProviderScope(
+      child: MyApp(isar: isar),
+    ),
   );
-  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
-  const MyApp({Key? key}) : super(key: key);
+  final Isar isar;
+  const MyApp({Key? key, required this.isar}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
