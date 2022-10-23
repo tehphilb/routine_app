@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
@@ -5,33 +7,39 @@ import 'package:path_provider/path_provider.dart';
 
 import 'package:routine_app/data/collections/category.dart';
 import 'package:routine_app/data/collections/routine.dart';
+import 'package:routine_app/services/provider/text_provider.dart';
 import 'package:routine_app/services/routes/routes.dart';
 
-final appTitleProvider = Provider<String>((ref) {
-  return 'Routine App';
-});
-
-final mainPageTitleProvider = Provider<String>((ref) {
-  return 'Routine';
-});
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+final initDirIsarProvider = FutureProvider<Isar>((ref) async {
+  log('building initDirIsarProvider');
   final dir = await getApplicationSupportDirectory();
-  final isar = await Isar.open(
+  return await Isar.open(
     [RoutineSchema, CategorySchema],
     directory: dir.path,
-  ); //TODO: reolace with riverpod provider
+  );
+});
+
+Future<void> main() async {
   runApp(
-    ProviderScope(
-      child: MyApp(isar: isar),
+    const Center(
+      child: CircularProgressIndicator(),
+    ),
+  );
+
+  WidgetsFlutterBinding.ensureInitialized();
+  final container = ProviderContainer();
+  container.read(initDirIsarProvider);
+
+  runApp(
+    UncontrolledProviderScope(
+      container: container,
+      child: const MyApp(),
     ),
   );
 }
 
 class MyApp extends ConsumerWidget {
-  final Isar isar;
-  const MyApp({Key? key, required this.isar}) : super(key: key);
+  const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

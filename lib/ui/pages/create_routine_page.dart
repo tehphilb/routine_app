@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-
-final createRoutinePageTitleProvider = Provider<String>((ref) {
-  return 'Create routine';
-});
+import 'package:isar/isar.dart';
+import 'package:routine_app/data/collections/category.dart';
+import 'package:routine_app/main.dart';
+import 'package:routine_app/services/provider/text_provider.dart';
 
 class CreateRoutinePage extends ConsumerStatefulWidget {
   static String get routeName => 'create_routine';
@@ -41,6 +41,7 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width * 0.7;
     return Scaffold(
         backgroundColor: const Color(0xffffffff),
         appBar: AppBar(
@@ -66,7 +67,7 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.7,
+                      width: width,
                       child: DropdownButton(
                         focusColor: const Color(0xffffffff),
                         dropdownColor: const Color(0xffffffff),
@@ -100,10 +101,10 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                               ElevatedButton(
                                 onPressed: () {
                                   if (_newCategoryController.text.isNotEmpty) {
-                                    _addCategory();
-                                  } else {
-                                    
-                                  }
+                                    Isar isar =
+                                        ref.read(initDirIsarProvider).value as Isar;
+                                    _addCategory(isar);
+                                  } else {}
                                 },
                                 child: const Text('Add'),
                               )
@@ -138,7 +139,7 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.7,
+                      width: width,
                       child: TextFormField(
                         controller: _timeController,
                         enabled: false,
@@ -156,7 +157,7 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                   padding: EdgeInsets.only(top: 16),
                 ),
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.7,
+                  width: width,
                   child: DropdownButton(
                     focusColor: const Color(0xffffffff),
                     dropdownColor: const Color(0xffffffff),
@@ -207,5 +208,13 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
     }
   }
 
-  _addCategory() {}
+  _addCategory(Isar isar) async {
+    final categories = isar.categorys;
+
+    final newCategory = Category()..name = _newCategoryController.text;
+
+    await isar.writeTxn((isar) async {
+      await categories.put(newCategory);
+    });
+  }
 }
