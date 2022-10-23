@@ -41,6 +41,8 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isar = ref.read(initDirIsarProvider);
+
     final width = MediaQuery.of(context).size.width * 0.7;
     return Scaffold(
         backgroundColor: const Color(0xffffffff),
@@ -100,11 +102,19 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                             actions: [
                               ElevatedButton(
                                 onPressed: () {
-                                  if (_newCategoryController.text.isNotEmpty) {
-                                    Isar isar =
-                                        ref.read(initDirIsarProvider).value as Isar;
-                                    _addCategory(isar);
-                                  } else {}
+                                  isar.when(data: (isar) {
+                                    if (_newCategoryController
+                                        .text.isNotEmpty) {
+                                      _addCategory(isar);
+                                    } else {}
+                                    return;
+                                  }, error:
+                                      (Object error, StackTrace? stackTrace) {
+                                    return Text(
+                                        'error: $error\nstackTrace: $stackTrace');
+                                  }, loading: () {
+                                    return const CircularProgressIndicator();
+                                  });
                                 },
                                 child: const Text('Add'),
                               )
