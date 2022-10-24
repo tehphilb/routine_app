@@ -3,22 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:routine_app/services/provider/text_provider.dart';
 
-class MainPage extends ConsumerStatefulWidget {
+class MainPage extends ConsumerWidget {
   static String get routeName => 'main';
   static String get routeLocation => '/';
+  
   const MainPage({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _HomePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
 
-class _HomePageState extends ConsumerState<MainPage> {
-  @override
-  Widget build(BuildContext context) {
+    final mainPageTitle = ref.watch(mainPageTitleProvider);
+
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
-        title: Text(ref.watch(mainPageTitleProvider)),
+        title: Text(mainPageTitle),
         actions: [
           IconButton(
             onPressed: () => context.go('/create_routine'),

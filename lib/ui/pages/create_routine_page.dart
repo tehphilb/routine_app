@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:isar/isar.dart';
 import 'package:routine_app/data/collections/category.dart';
-import 'package:routine_app/main.dart';
+import 'package:routine_app/services/db_services/isar_service.dart';
 import 'package:routine_app/services/provider/text_provider.dart';
 
 class CreateRoutinePage extends ConsumerStatefulWidget {
@@ -33,19 +32,14 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
 
   TimeOfDay selectedTime = TimeOfDay.now();
 
-  @override
-  void initState() {
-    super.initState();
-    _readCategory();
-  }
-
+  
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _newCategoryController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    final isar = ref.read(initDirIsarProvider);
+    final isar = ref.watch(isarProvider);
     final width = MediaQuery.of(context).size.width * 0.7;
 
     return Scaffold(
@@ -58,153 +52,155 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
         centerTitle: true,
         title: Text(ref.watch(createRoutinePageTitleProvider)),
       ),
-      body: isar.when(
-        data: (isar) {
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Category',
+                style: TextStyle(
+                    color: Colors.black38, fontWeight: FontWeight.w600),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Category',
-                    style: TextStyle(
-                        color: Colors.black38, fontWeight: FontWeight.w600),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: width,
-                        child: DropdownButton(
-                          focusColor: const Color(0xffffffff),
-                          dropdownColor: const Color(0xffffffff),
-                          isExpanded: true,
-                          value: dropdownValue,
-                          icon: const Icon(Icons.keyboard_arrow_down),
-                          items: categories?.map<DropdownMenuItem<Category>>(
-                              (Category item) {
-                            return DropdownMenuItem<Category>(
-                              value: item,
-                              child: Text(item.name),
-                            );
-                          }).toList(),
-                          onChanged: (Category? value) {
-                            setState(() {
-                              dropdownValue = value!;
-                            });
-                          },
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) => AlertDialog(
-                              title: const Text('New Category'),
-                              content: TextFormField(
-                                controller: _newCategoryController,
-                              ),
-                              actions: [
-                                ElevatedButton(
-                                  onPressed: () {
-                                    if (_newCategoryController
-                                        .text.isNotEmpty) {
-                                      _addCategory(isar);
-                                    }
-                                  },
-                                  child: const Text('Add'),
-                                )
-                              ],
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.add),
-                      )
-                    ],
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 16.0),
-                    child: Text(
-                      'Title',
-                      style: TextStyle(
-                          color: Colors.black38, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  TextFormField(
-                    controller: _titleController,
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 16.0),
-                    child: Text(
-                      'Start Time',
-                      style: TextStyle(
-                          color: Colors.black38, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(
-                        width: width,
-                        child: TextFormField(
-                          controller: _timeController,
-                          enabled: false,
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          _selectedTime(context);
-                        },
-                        icon: const Icon(Icons.calendar_month),
-                      ),
-                    ],
-                  ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 16),
-                  ),
                   SizedBox(
                     width: width,
                     child: DropdownButton(
                       focusColor: const Color(0xffffffff),
                       dropdownColor: const Color(0xffffffff),
                       isExpanded: true,
-                      value: dropdownValueDay,
+                      value: dropdownValue,
                       icon: const Icon(Icons.keyboard_arrow_down),
-                      items: days.map<DropdownMenuItem<String>>((String item) {
-                        return DropdownMenuItem<String>(
+                      items: categories
+                          ?.map<DropdownMenuItem<Category>>((Category item) {
+                        return DropdownMenuItem<Category>(
                           value: item,
-                          child: Text(item),
+                          child: Text(item.name),
                         );
                       }).toList(),
-                      onChanged: (String? value) {
+                      onChanged: (Category? value) {
                         setState(() {
-                          dropdownValueDay = value!;
+                          dropdownValue = value!;
                         });
                       },
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(top: 16),
-                  ),
-                  Align(
-                    alignment: Alignment.center,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text('Add'),
-                    ),
+                  IconButton(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) => AlertDialog(
+                          title: const Text('New Category'),
+                          content: TextFormField(
+                            controller: _newCategoryController,
+                          ),
+                          actions: [
+                            ElevatedButton(
+                              onPressed: () async {
+                                if (_newCategoryController.text.isNotEmpty) {
+                                  isar.saveCategory();
+                                }
+
+                {
+                  if (_formKey.currentState!.validate()) {
+                    widget.service.saveCourse(Course()..title = _textController.text);
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(
+                            "New course '${_textController.text}' saved in DB")));
+
+                    Navigator.pop(context);
+                  }
+                },
+
+
+                              },
+                              child: const Text('Add'),
+                            )
+                          ],
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.add),
                   )
                 ],
               ),
-            ),
-          );
-        },
-        error: (Object error, StackTrace? stackTrace) {
-          return Text('error: $error\nstackTrace: $stackTrace');
-        },
-        loading: () {
-          return const CircularProgressIndicator();
-        },
+              const Padding(
+                padding: EdgeInsets.only(top: 16.0),
+                child: Text(
+                  'Title',
+                  style: TextStyle(
+                      color: Colors.black38, fontWeight: FontWeight.w600),
+                ),
+              ),
+              TextFormField(
+                controller: _titleController,
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 16.0),
+                child: Text(
+                  'Start Time',
+                  style: TextStyle(
+                      color: Colors.black38, fontWeight: FontWeight.w600),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  SizedBox(
+                    width: width,
+                    child: TextFormField(
+                      controller: _timeController,
+                      enabled: false,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      _selectedTime(context);
+                    },
+                    icon: const Icon(Icons.calendar_month),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 16),
+              ),
+              SizedBox(
+                width: width,
+                child: DropdownButton(
+                  focusColor: const Color(0xffffffff),
+                  dropdownColor: const Color(0xffffffff),
+                  isExpanded: true,
+                  value: dropdownValueDay,
+                  icon: const Icon(Icons.keyboard_arrow_down),
+                  items: days.map<DropdownMenuItem<String>>((String item) {
+                    return DropdownMenuItem<String>(
+                      value: item,
+                      child: Text(item),
+                    );
+                  }).toList(),
+                  onChanged: (String? value) {
+                    setState(() {
+                      dropdownValueDay = value!;
+                    });
+                  },
+                ),
+              ),
+              const Padding(
+                padding: EdgeInsets.only(top: 16),
+              ),
+              Align(
+                alignment: Alignment.center,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  child: const Text('Add'),
+                ),
+              )
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -222,26 +218,5 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
             "${selectedTime.hour}:${selectedTime.minute} ${selectedTime.period.name}";
       });
     }
-  }
-
-  _addCategory(Isar isar) async {
-    final categories = isar.categorys;
-    final newCategory = Category()..name = _newCategoryController.text;
-
-    await isar.writeTxn(() async {
-      await categories.put(newCategory);
-    });
-
-    _newCategoryController.clear();
-    _readCategory(isar);
-  }
-
-  _readCategory([Isar? isar]) async {
-    final categoryCollection = isar?.categorys;
-    final getCategories = await categoryCollection?.where().findAll();
-    setState(() {
-      dropdownValue = null;
-      categories = getCategories;
-    });
   }
 }
