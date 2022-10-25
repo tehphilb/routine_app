@@ -14,8 +14,8 @@ class CustomDropdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dropdownValue = ref.watch(dropdownValueProvider);
-    return StreamBuilder(
-      stream: dropdownItems.,
+    return FutureBuilder(
+      future: dropdownItems,
       builder: (BuildContext context, AsyncSnapshot<List> snapshot) {
         if (snapshot.hasData) {
           return DropdownButton(
