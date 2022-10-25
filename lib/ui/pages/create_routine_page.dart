@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:routine_app/data/collections/category.dart';
 import 'package:routine_app/services/db_services/isar_service.dart';
 import 'package:routine_app/services/provider/text_provider.dart';
+import 'package:routine_app/ui/widgets/custom_dropdown.dart';
 
 class CreateRoutinePage extends ConsumerStatefulWidget {
   static String get routeName => 'create_routine';
@@ -16,7 +17,7 @@ class CreateRoutinePage extends ConsumerStatefulWidget {
 }
 
 class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
-  List<Category>? categories;
+  //List<Category>? categories;
   Category? dropdownValue;
 
   List<String> days = [
@@ -32,7 +33,6 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
 
   TimeOfDay selectedTime = TimeOfDay.now();
 
-  
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _timeController = TextEditingController();
   final TextEditingController _newCategoryController = TextEditingController();
@@ -40,6 +40,8 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
   @override
   Widget build(BuildContext context) {
     final isar = ref.watch(isarProvider);
+    final isarStream = ref.watch(isarStreamProvider);
+
     final width = MediaQuery.of(context).size.width * 0.7;
 
     return Scaffold(
@@ -67,27 +69,11 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   SizedBox(
-                    width: width,
-                    child: DropdownButton(
-                      focusColor: const Color(0xffffffff),
-                      dropdownColor: const Color(0xffffffff),
-                      isExpanded: true,
-                      value: dropdownValue,
-                      icon: const Icon(Icons.keyboard_arrow_down),
-                      items: categories
-                          ?.map<DropdownMenuItem<Category>>((Category item) {
-                        return DropdownMenuItem<Category>(
-                          value: item,
-                          child: Text(item.name),
-                        );
-                      }).toList(),
-                      onChanged: (Category? value) {
-                        setState(() {
-                          dropdownValue = value!;
-                        });
-                      },
-                    ),
-                  ),
+                      width: width,
+                      child: CustomDropdown(
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                        dropdownItems: isar.getAllCategories(),
+                      )),
                   IconButton(
                     onPressed: () {
                       showDialog(
@@ -101,21 +87,16 @@ class _CreateRoutinPageState extends ConsumerState<CreateRoutinePage> {
                             ElevatedButton(
                               onPressed: () async {
                                 if (_newCategoryController.text.isNotEmpty) {
-                                  isar.saveCategory();
+                                  isar.saveCategory(Category()
+                                    ..name = _newCategoryController.text);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          "New course '${_newCategoryController.text}' saved in DB"),
+                                    ),
+                                  );
+                                  Navigator.pop(context);
                                 }
-
-                {
-                  if (_formKey.currentState!.validate()) {
-                    widget.service.saveCourse(Course()..title = _textController.text);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            "New course '${_textController.text}' saved in DB")));
-
-                    Navigator.pop(context);
-                  }
-                },
-
-
                               },
                               child: const Text('Add'),
                             )

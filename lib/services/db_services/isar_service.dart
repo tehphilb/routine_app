@@ -7,6 +7,10 @@ final isarProvider = Provider<IsarService>((ref) {
   return IsarService();
 });
 
+final isarStreamProvider = StreamProvider<IsarService>((ref) async* {
+  yield IsarService();
+});
+
 class IsarService {
   late Future<Isar> db;
 
@@ -29,15 +33,15 @@ class IsarService {
   //   isar.writeTxnSync<int>(() => isar.teachers.putSync(newTeacher));
   // }
 
-  Future<List<Category>> getAllCourses() async {
+  Future<List<Category>> getAllCategories() async {
     final isar = await db;
     return await isar.categorys.where().findAll();
   }
 
-  // Stream<List<Course>> listenToCourses() async* {
-  //   final isar = await db;
-  //   yield* isar.courses.where().watch(initialReturn: true);
-  // }
+  Stream<List<Category>> listenToCategories() async* {
+    final isar = await db;
+    yield* isar.categorys.where().watch();
+  }
 
   Future<void> cleanDb() async {
     final isar = await db;
